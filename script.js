@@ -1,122 +1,171 @@
-let a = '';
-let b = '';
-let operator = '';
-let clearScreen = false;
-let evaluated = false;
+const Calculator = (() => {
 
-const add = (a, b) => (a + b);
+	let operand1 = "";
+	let operand2 = "";
+	let operator = "";
 
-const subtract = (a, b) => (a - b);
+    const numberBtns = Array.from(document.querySelectorAll('[data-number]'));
+    numberBtns.forEach(btn => btn.addEventListener('click', () => setOperands(btn)));
 
-const multiply = (a, b) => (a * b);
+    const operatorBtns = Array.from(document.querySelectorAll('[data-operation]'));
+    operatorBtns.forEach(btn => btn.addEventListener('click', () => setOperator(btn)));
 
-const divide = (a, b) => b === 0 ? "LOL" : a / b;
+    const equalBtn = document.querySelector('[data-equals]');
+    equalBtn.addEventListener('click', () => evaluateExpression());
 
-const operate = (operator, a, b) => {
+    const clearBtn = document.querySelector('[data-ac]');
+    clearBtn.addEventListener('click', () => clearExpression());
 
-	if (operator === '+') return add(a, b);
-	else if (operator === '-') return subtract(a, b);
-	else if(operator === '*') return multiply(a, b);
-	else if(operator === '÷') return divide(a, b);
-}
+    const setOperands = (btn) => {
 
-function setNumber(num) {
-
-	if (clearScreen) {
-
-		screen.textContent = ''; 
-		clearScreen = false;
-	}
-
-	if (evaluated) {
-
-        screen.textContent = '';
-		acFn();
-		evaluated = false;
-	}
-
-	if(num === '.' && screen.textContent.includes('.')) return;
-
-    screen.textContent += num;
-}
-
-function setOperator(op) {
-
-	if (operator) {
-  
-        if (evaluated) {
-
-        	operator = op.textContent;
-        	evaluated = false;
-        	a = parseFloat(screen.textContent);
-        	clearScreen = true;
+        if (!operator) {
+        	operand1 += btn.innerText;
+        }
+        else {
+        	operand2 += btn.innerText;
         }
 
+        DisplayController.displayNumber(btn);
+    
+    }
+
+    const setOperator = (btn) => {
+
+    	if (operand1 === "") {
+    		return;
+        }
+   
+        if (!operator) { 
+            operator = btn.innerText;
+        }
         else {
 
-            equalFn(); 
-            operator = op.textContent;
-		    a = parseFloat(screen.textContent);
-		    evaluated = false;
-		    clearScreen = true;
-		}
+        	if (!operand2) {
+        		DisplayController.displayDifferentOperator(btn);
+        		operator = btn.innerText;
+        		return;
+        	}
+        	evaluateExpression();
+        	operator = btn.innerText;
+        }
 
-		return;
+    	DisplayController.displayOperator(btn);
+    }
+
+    const evaluateExpression = () => {
+
+    	if (operand1 === "" || !operand2 || !operator) return;
+
+    	let evaluation = Operations.operate(operator, parseFloat(operand1), parseFloat(operand2));
+    	DisplayController.displayEvaluation(evaluation);  
+    	console.log(operand1 + " " + operator + " " + operand2);
+
+    	if (evaluation !== "undefined") operand1 = evaluation;
+    	else {
+    		operand1 = "";
+    		DisplayController.setEvaluating(false);
+    	}	
+    	operand2 = "";
+    	operator = "";
+    }
+
+    const clearExpression = (btn) => {
+
+    	operand1 = "";
+    	operand2 = "";
+    	operator = "";
+    	DisplayController.clearDisplay();
+    }
+
+    return;
+
+})();
+
+
+
+
+const Operations = (() => {
+
+    const add = (a, b) => (a + b);
+
+    const subtract = (a, b) => (a - b);
+
+    const multiply = (a, b) => (a * b);
+
+    const divide = (a, b) => b === 0 ? "undefined" : a / b;
+
+    const operate = (operator, a, b) => {
+	    if (operator === '+') return add(a, b);
+	    else if (operator === '-') return subtract(a, b);
+	    else if(operator === '*') return multiply(a, b);
+	    else if(operator === '÷') return divide(a, b);
+    }
+
+    return {add, subtract, multiply, divide, operate};
+
+})();
+
+const DisplayController = (() => {
+
+	let evaluating = false;
+
+	const display = document.querySelector('[data-display]');
+
+	const displayDefault = () => {
+		display.textContent = "0";
 	}
 
-	operator = op.textContent;
-    a = parseFloat(screen.textContent);
-    clearScreen = true;	
-}
+	const displayNumber = (btn) => {
+		if (!evaluating) {
+			display.textContent = "";
+			evaluating = true;
+		}
 
-function equalFn() {
+		display.textContent += btn.innerText;
+	}
+		
+	const displayOperator = (btn) => {
 
-    if (evaluated) {
+		display.textContent += " " + btn.innerText + " ";
+		operator = true;
+	}
 
-    	a = parseFloat(screen.textContent);
+    const displayDifferentOperator = (btn) => {
+
+    	display.textContent = display.textContent.slice(0, -3);
+    	displayOperator(btn);
     }
 
-    else {
 
-        b = parseFloat(screen.textContent);
-    }
+	const displayEvaluation = (x) => {
 
-    let ans = operate(operator, a, b);
-    screen.textContent = '';
-    screen.textContent += ans;
-    evaluated = true;  
-    b = '';
-}
+		display.textContent = x;
+		operator = false;
+	}
 
-function acFn() {
+	const getDisplayValue = () => {
 
-	a = '';
-	b = '';
-	operator = '';
-	screen.textContent = '';
-}
+		return display.textContent;
+	}
 
-function deleteFn() {
+	const clearDisplay = () => {
+		displayDefault();
+		evaluating = false;
+	}
 
-	screen.textContent = screen.textContent.slice(0, -1);
-}
+	const setEvaluating = (bool) => {
 
-const numberBtns = Array.from(document.querySelectorAll('[data-number]'));
-numberBtns.forEach(number => number.addEventListener('click', function(){setNumber(number.textContent)}));
+		evaluating = bool;
+	}
 
-const operators = Array.from(document.querySelectorAll('[data-operation]'));
-operators.forEach(operator => operator.addEventListener('click', function(){setOperator(operator)}));
+	return {displayDefault, displayNumber, displayOperator, displayEvaluation, getDisplayValue, clearDisplay, displayDifferentOperator, setEvaluating};
+})();
 
-const equalBtn = document.querySelector('[data-equals]');
-equalBtn.addEventListener('click', function(){equalFn()});
-
-const acBtn = document.querySelector('[data-ac]');
-acBtn.addEventListener('click', function(){acFn()});
+DisplayController.displayDefault();
 
 const deleteBtn = document.querySelector('[data-delete]');
 deleteBtn.addEventListener('click', function(){deleteFn()})
 
-const screen = document.querySelector('[data-display]');
 
 
 
