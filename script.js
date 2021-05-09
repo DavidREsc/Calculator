@@ -3,6 +3,9 @@ const Calculator = (() => {
 	let operand1 = "";
 	let operand2 = "";
 	let operator = "";
+	let evaluated = false;
+	let lastOperator = "";
+	let lastOperand = "";
 
     const numberBtns = Array.from(document.querySelectorAll('[data-number]'));
     numberBtns.forEach(btn => btn.addEventListener('click', () => setOperands(btn)));
@@ -16,9 +19,16 @@ const Calculator = (() => {
     const clearBtn = document.querySelector('[data-ac]');
     clearBtn.addEventListener('click', () => clearExpression());
 
+    const deleteBtn = document.querySelector('[data-delete]');
+    deleteBtn.addEventListener('click', () => deleteFromExpression());
+
+
     const setOperands = (btn) => {
 
         if (!operator) {
+        	if (evaluated) { 
+                clearExpression();
+            }
         	operand1 += btn.innerText;
         }
         else {
@@ -31,11 +41,16 @@ const Calculator = (() => {
 
     const setOperator = (btn) => {
 
-    	if (operand1 === "") {
-    		return;
+    	if ((operand1 === "" || operand1 === "-") && btn.innerText !== '-') return;
+
+        else if (operand1 === "-" && btn.innerText === "-") return
+
+        else if (operand1 === "" && btn.innerText === '-') {
+        	setOperands(btn);
+        	return;
         }
    
-        if (!operator) { 
+        else if (!operator) { 
             operator = btn.innerText;
         }
         else {
@@ -54,19 +69,36 @@ const Calculator = (() => {
 
     const evaluateExpression = () => {
 
-    	if (operand1 === "" || !operand2 || !operator) return;
+    	let evaluation = null;
 
-    	let evaluation = Operations.operate(operator, parseFloat(operand1), parseFloat(operand2));
-    	DisplayController.displayEvaluation(evaluation);  
-    	console.log(operand1 + " " + operator + " " + operand2);
+    	if (operand2 === "" && lastOperator !== "") {
+    	    evaluation = Operations.operate(lastOperator, parseFloat(operand1), parseFloat(lastOperand));
+    	}
+    	else if (operand1 !== "" && operand2 !== "" && operator !== "") {
+    		evaluation = Operations.operate(operator, parseFloat(operand1), parseFloat(operand2));
+    		lastOperator = operator;
+    		lastOperand = operand2;
+    	}
 
-    	if (evaluation !== "undefined") operand1 = evaluation;
-    	else {
+    	else return;
+
+        DisplayController.displayEvaluation(evaluation);
+        evaluated = true;  
+
+    	if (evaluation === "undefined" || evaluation === "infinity") {
+
     		operand1 = "";
-    		DisplayController.setEvaluating(false);
-    	}	
+    		DisplayController.setEvaluating(false);  		
+    	}
+    	else operand1 = evaluation;
+
     	operand2 = "";
     	operator = "";
+    }
+
+    const deleteFromExpression = () => {
+
+    	console.log("HI");
     }
 
     const clearExpression = (btn) => {
@@ -74,15 +106,14 @@ const Calculator = (() => {
     	operand1 = "";
     	operand2 = "";
     	operator = "";
+    	lastOperand = "";
+    	lastOperator = "";
+    	evaluated = false;
     	DisplayController.clearDisplay();
     }
 
     return;
-
 })();
-
-
-
 
 const Operations = (() => {
 
@@ -102,7 +133,6 @@ const Operations = (() => {
     }
 
     return {add, subtract, multiply, divide, operate};
-
 })();
 
 const DisplayController = (() => {
@@ -127,7 +157,6 @@ const DisplayController = (() => {
 	const displayOperator = (btn) => {
 
 		display.textContent += " " + btn.innerText + " ";
-		operator = true;
 	}
 
     const displayDifferentOperator = (btn) => {
@@ -140,7 +169,6 @@ const DisplayController = (() => {
 	const displayEvaluation = (x) => {
 
 		display.textContent = x;
-		operator = false;
 	}
 
 	const getDisplayValue = () => {
@@ -162,14 +190,3 @@ const DisplayController = (() => {
 })();
 
 DisplayController.displayDefault();
-
-const deleteBtn = document.querySelector('[data-delete]');
-deleteBtn.addEventListener('click', function(){deleteFn()})
-
-
-
-
-
-
-
-
