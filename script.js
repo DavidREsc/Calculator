@@ -4,8 +4,8 @@ const Calculator = (() => {
 	let operand2 = "";
 	let operator = "";
 	let evaluated = false;
-	let lastOperator = "";
-	let lastOperand = "";
+	let previousOperator = "";
+	let previousOperand = "";
 
     const numberBtns = Array.from(document.querySelectorAll('[data-number]'));
     numberBtns.forEach(btn => btn.addEventListener('click', () => setOperands(btn)));
@@ -29,21 +29,46 @@ const Calculator = (() => {
         	if (evaluated) { 
                 clearExpression();
             }
-        	operand1 += btn.innerText;
+            if (validateOperands(btn.innerText, operand1)) {
+                if (btn.innerText === '.' && operand1.length === 0) {
+                    operand1 += '0';
+                    DisplayController.displayNumber('0');
+                }
+                operand1 += btn.innerText;
+            }
+            else return;
         }
         else {
-        	operand2 += btn.innerText;
+
+            if (validateOperands(btn.innerText, operand2)) {
+                if (btn.innerText === '.' && operand2.length === 0) {
+                    operand2 += '0';
+                    DisplayController.displayNumber('0');
+                }
+        	    operand2 += btn.innerText;
+            }
+            else return;
         }
 
-        DisplayController.displayNumber(btn);
-    
+        DisplayController.displayNumber(btn.innerText);    
+    }
+
+    const validateOperands = (text, operand) => {
+
+        if (text === '.' && operand.includes('.')) return false;
+        else if (operand.length === 1 && operand[0] == '0' && text !== '.') return false;
+        return true;
     }
 
     const setOperator = (btn) => {
 
-    	if ((operand1 === "" || operand1 === "-") && btn.innerText !== '-') return;
+    	if ((operand1 === "" || operand1 === "-" || operand1 === '.' || operand2 === '.') && btn.innerText !== '-') return;
 
-        else if (operand1 === "-" && btn.innerText === "-") return
+        else if ((operand1 === "-" || operand1 === '.' || operand2 === '.') && btn.innerText === "-") return
+
+        else if (operand1[operand1.length-1] === '.' || operand2[operand2.length-1] === '.') return;
+
+        else if (operand1 === "-.") return;
 
         else if (operand1 === "" && btn.innerText === '-') {
         	setOperands(btn);
@@ -71,13 +96,15 @@ const Calculator = (() => {
 
     	let evaluation = null;
 
-    	if (operand2 === "" && lastOperator !== "") {
-    	    evaluation = Operations.operate(lastOperator, parseFloat(operand1), parseFloat(lastOperand));
+        if (operand2[operand2.length-1] == '.') return;
+
+    	else if (operand2 === "" && previousOperand !== "" && operator === "") {
+    	    evaluation = Operations.operate(previousOperator, parseFloat(operand1), parseFloat(previousOperand));
     	}
     	else if (operand1 !== "" && operand2 !== "" && operator !== "") {
     		evaluation = Operations.operate(operator, parseFloat(operand1), parseFloat(operand2));
-    		lastOperator = operator;
-    		lastOperand = operand2;
+    		previousOperator = operator;
+    		previousOperand = operand2;
     	}
 
     	else return;
@@ -85,12 +112,12 @@ const Calculator = (() => {
         DisplayController.displayEvaluation(evaluation);
         evaluated = true;  
 
-    	if (evaluation === "undefined" || evaluation === "infinity") {
+    	if (evaluation === "Undefined") {
 
     		operand1 = "";
     		DisplayController.setEvaluating(false);  		
     	}
-    	else operand1 = evaluation;
+    	else operand1 = evaluation.toString();
 
     	operand2 = "";
     	operator = "";
@@ -98,7 +125,25 @@ const Calculator = (() => {
 
     const deleteFromExpression = () => {
 
-    	console.log("HI");
+        if (operand2 !== "") {
+            operand2 = operand2.slice(0, -1);
+            DisplayController.deleteLastDigit();
+            return;
+        }
+
+        else if (operator) {
+            operator = "";
+            DisplayController.deleteOperator();
+            return;
+        }
+
+        else if (operand1 !== "" && evaluated !== true) {
+
+            operand1 = operand1.slice(0, -1);
+            DisplayController.deleteLastDigit();
+            return;
+        }
+        else return;
     }
 
     const clearExpression = (btn) => {
@@ -106,8 +151,8 @@ const Calculator = (() => {
     	operand1 = "";
     	operand2 = "";
     	operator = "";
-    	lastOperand = "";
-    	lastOperator = "";
+    	previousOperand = "";
+    	previousOperator = "";
     	evaluated = false;
     	DisplayController.clearDisplay();
     }
@@ -123,7 +168,7 @@ const Operations = (() => {
 
     const multiply = (a, b) => (a * b);
 
-    const divide = (a, b) => b === 0 ? "undefined" : a / b;
+    const divide = (a, b) => b === 0 ? "Undefined" : a / b;
 
     const operate = (operator, a, b) => {
 	    if (operator === '+') return add(a, b);
@@ -145,14 +190,34 @@ const DisplayController = (() => {
 		display.textContent = "0";
 	}
 
-	const displayNumber = (btn) => {
+	const displayNumber = (num) => {
 		if (!evaluating) {
 			display.textContent = "";
 			evaluating = true;
 		}
 
-		display.textContent += btn.innerText;
+        display.textContent += num;
 	}
+
+    const getCommaDelimited = (text) => {
+
+        return (text.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+    }
+
+    const searchForDecimal = (text) => {
+
+        freq = {};
+
+        for (let char of text) {
+
+            if (char === '.') {
+
+                freq[char] ? freq[char] += 1: freq[char] = 1;
+            }
+        }
+
+        return freq['.'];
+    }
 		
 	const displayOperator = (btn) => {
 
@@ -165,10 +230,28 @@ const DisplayController = (() => {
     	displayOperator(btn);
     }
 
+    const deleteLastDigit = () => {
+
+        display.textContent = display.textContent.slice(0, -1);
+        if (display.textContent === "") {
+            clearDisplay();
+        }
+    }
+
+    const deleteOperator = () => {
+
+        display.textContent = display.textContent.slice(0, -3);
+    }
+
 
 	const displayEvaluation = (x) => {
 
-		display.textContent = x;
+        let text = x.toString();
+        if(text.includes('.')) {
+            let stext = text.split('.');
+            display.textContent = getCommaDelimited(stext[0]) + '.' + stext[1];
+        }   
+		else display.textContent = getCommaDelimited(x);
 	}
 
 	const getDisplayValue = () => {
@@ -186,7 +269,23 @@ const DisplayController = (() => {
 		evaluating = bool;
 	}
 
-	return {displayDefault, displayNumber, displayOperator, displayEvaluation, getDisplayValue, clearDisplay, displayDifferentOperator, setEvaluating};
+	return {displayDefault,
+            displayNumber,
+            displayOperator,
+            displayEvaluation,
+            getDisplayValue,
+            clearDisplay,
+            displayDifferentOperator,
+            setEvaluating,
+            deleteLastDigit,
+            deleteOperator};
 })();
 
 DisplayController.displayDefault();
+
+
+
+
+
+
+

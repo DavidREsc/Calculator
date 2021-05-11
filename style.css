@@ -34,8 +34,8 @@ body {
 	cursor: pointer;
 	font-size: 2rem;
 	outline: none;
-	background-color: rgba(0, 0, 0, .75);
-    border: 8px solid #888888;
+	background-color: rgba(0, 0, 0, .7);
+    border: 8px solid #444444;
     color: #f5c71a;
 }
 
@@ -75,11 +75,11 @@ body {
 	padding: 10px;
 	word-wrap: break-word;
 	word-break: break-all;
-	border: 8px solid #888888;
+	border: 8px solid #444444;
 }
 
 .output .display {
 
 	color: white;
-	font-size: 2.5rem;
+	font-size: 1.6rem;
 }
