@@ -4,6 +4,11 @@
 	font-weight: normal;
 }
 
+html {
+
+	font-size: calc(8px + (20 - 8) * ((100vw - 300px) / (2560 - 300)));
+}
+
 body {
 
     /* Body will cover whole page */
@@ -25,17 +30,17 @@ body {
 	justify-content: center;
 	align-content: center;
 	min-height: 100vh;
-	grid-template-columns: repeat(4, 100px);
-	grid-template-rows: minmax(120px, auto) repeat(5, 100px);
+	grid-template-columns: repeat(4, 6rem);
+	grid-template-rows: minmax(6rem, auto) repeat(5, 6rem);
 }
 
 .calculator-grid > button {
 
 	cursor: pointer;
-	font-size: 2rem;
+	font-size: 1.5rem;
 	outline: none;
 	background-color: rgba(0, 0, 0, .7);
-    border: 8px solid #444444;
+    border: 0.5rem solid #444444;
     color: #f5c71a;
 }
 
@@ -72,10 +77,10 @@ body {
 	align-items: flex-end;
 	justify-content: space-around;
 	flex-direction: column;
-	padding: 10px;
+	padding: 1rem;
 	word-wrap: break-word;
 	word-break: break-all;
-	border: 8px solid #444444;
+	border: 0.8rem solid #444444;
 }
 
 .output .display {
